@@ -1,11 +1,16 @@
 channels:
   - conda-forge
-  - defaults
+  - bioconda
 dependencies:
-  - python=3.12.*
+  - python
+  - numpy
+  - matplotlib
+  - pandas
+  - biopython
+  - jax
+  - tqdm
+  - ipykernel
+  - ipywidgets
   - pip
   - pip:
-    - -e .[dev]
-    # .  # bare minimum
-    # - .[dev,jupyter,jax,data,misc]  # include all optional dependencies
-    # - -e .[dev,jupyter,jax,data,misc]  # optional dependencies in editing mode
+    - -e .

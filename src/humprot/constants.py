@@ -1,0 +1,7 @@
+"""Constants
+
+"""
+
+AA_LIST_STD20 = list("ACDEFGHIKLMNPQRSTVWY")
+AA_LIST_XU = list("ACDEFGHIKLMNPQRSTVWYXU")
+

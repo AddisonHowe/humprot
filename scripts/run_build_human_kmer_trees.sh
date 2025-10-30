@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-for k in {9..10}; do
+for k in 11; do
     echo k=$k
     python scripts/build_human_kmer_tree.py \
         -i human_proteins.faa -k $k -d ./data -o out/human_kmer_trees \
-        --outfname human_kmer_tree
+        --outfname human_kmer_tree --pbar
 done

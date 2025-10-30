@@ -30,6 +30,8 @@ def parse_args(args):
     parser.add_argument("-o", "--outdir", type=str, required=True)
     parser.add_argument("-aa", "--aa_list", type=str, default=None)
     parser.add_argument("--outfname", type=str, default="saved_tree")
+    parser.add_argument("--pbar", action="store_true")
+    parser.add_argument("-v", "--verbosity", type=int, default=1)
     parser.add_argument("--seed", type=int, default=0)
 
     return parser.parse_args(args)
@@ -42,7 +44,9 @@ def main(args):
     DATDIR = args.datdir
     OUTDIR = args.outdir
     aa_list = args.aa_list
+    pbar = args.pbar
     SEED = args.seed
+    verbosity = args.verbosity
 
     # Housekeeping
     if SEED == 0:
@@ -69,6 +73,7 @@ def main(args):
     INT2SYM[MASK] = "-"
 
     # Load protein sequences
+    print(f"Loading protein sequences from file: {HUMAN_DATA_FPATH}")
     id2seq = {}
     for record in SeqIO.parse(HUMAN_DATA_FPATH, "fasta"):
         seqid = record.id
@@ -78,11 +83,18 @@ def main(args):
 
     time0 = time.time()
     for k in k_list:
+        # Construct the tree
+        print(f"Building {k}-mer tree...")
         t0 = time.time()
-        tree = build_kmer_tree(id2seq, k, alphabet_size, rng=rng)
+        tree = build_kmer_tree(
+            id2seq, k, alphabet_size, 
+            rng=rng, pbar=pbar, verbosity=verbosity,
+        )
+        tt1 = time.time()
+        print(f"Build complete ({tt1-t0:.3g} seconds)")
         # Save the tree
         saveas = os.path.join(OUTDIR, outfname + f"_{k}.npz")
-        print(f"Saving to {saveas}")
+        print(f"Saving to file: {saveas}")
         tt0 = time.time()
         tree.save(saveas)
         tt1 = time.time()
@@ -96,28 +108,36 @@ def main(args):
 
 def build_kmer_tree(
         id2seq, k, alphabet_size, *, 
-        rng=None,
+        rng=None, verbosity=1, pbar=False
 ):
     rng = np.random.default_rng(rng)
 
     # Compute kmers
+    if verbosity:
+        print("Computing kmer counts...")
     kmer_counts = count_kmers_in_seqs(
-        id2seq.values(), k, pbar=True, leave_pbar=True,
+        id2seq.values(), k, pbar=pbar, leave_pbar=True,
     )
+    if verbosity:
+        print("Finished computing kmer counts")
 
     # Construct kmer tree
     tree = KmerTree(None, mode="w+", alphabet_size=alphabet_size)
 
+    if verbosity:
+        print("Adding kmers to tree...")
     max_count = np.inf
     count = 0
     for kmer in tqdm.tqdm(
             kmer_counts, total=min(max_count, len(kmer_counts)), 
-            disable=True, mininterval=2
+            disable=not pbar, mininterval=2
     ):
         if count >= max_count:
             break
         tree.add_kmer(kmer, kmer_counts[tuple(kmer)])
         count += 1
+    if verbosity:
+        print("Finished adding kmers")
 
     return tree
 

@@ -21,10 +21,24 @@ def int2sym(
     return "".join([mapping[i] for i in seq])
 
 
+def build_i2s_s2i_maps(
+        aa_list, mask=None, mask_sym="-",
+) -> tuple[dict[np.uint8, str], dict[str, np.uint8]]:
+    aa_list = list("ACDEFGHIKLMNPQRSTVWYXU")
+    sym2int_map = {sym: i for i, sym in enumerate(aa_list)}
+    int2sym_map = {i: sym for i, sym in enumerate(aa_list)}
+    if mask is not None:
+        int2sym_map[mask] = mask_sym
+        sym2int_map[mask_sym] = mask
+    return int2sym_map, sym2int_map
+
+
 def get_sequence_kmers(
         seq: NDArray[np.uint8], 
         k: int,
 ) -> NDArray[np.uint8]:
+    if isinstance(seq, list):
+        seq = np.array(seq, dtype=np.uint8)
     if k > seq.shape[0]:
         return np.empty((0, k), dtype=seq.dtype)
     return np.lib.stride_tricks.sliding_window_view(seq, window_shape=k)

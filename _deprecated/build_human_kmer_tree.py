@@ -18,7 +18,7 @@ import humprot
 from humprot.helpers import sym2int, int2sym
 from humprot.helpers import get_kmers_from_sequences
 from humprot.helpers import count_kmers_in_seqs
-from humprot.compact_trie import CompactTrie as KmerTree
+from humprot.trees import CompactTrie as KmerTree
 
 
 def parse_args(args):

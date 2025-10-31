@@ -6,11 +6,11 @@ import os
 import pytest
 import numpy as np
 
-from humprot.compact_trie import CompactTrie
-from humprot.helpers import get_kmers_from_sequences, int2sym, sym2int
+from humprot.trees.compact_trie import CompactTrie
+from humprot.helpers import get_kmers_from_sequences, sym2int
 
 DATDIR = "./tests/data/_tmp"
-os.makedirs("DATDIR", exist_ok=True)
+os.makedirs(DATDIR, exist_ok=True)
 
 def get_tree(name="tmp_test_tree.dat"):
     return CompactTrie(f"{DATDIR}/{name}", mode="w+", initial_nodes=2)
@@ -165,3 +165,26 @@ def test_save_load_simple_tree1(simple_tree1, query, value):
     loaded_tree = CompactTrie.load(savefpath)
     res = loaded_tree.query(query)
     assert  res == value, f"Expected {value} for query {query}. Got {res}."
+
+
+@pytest.fixture
+def simple_tree2():
+    tree = get_tree("test_simpletree1.dat")
+    tree.add_kmer([0])
+    tree.add_kmer([0])
+    tree.add_kmer([1])
+    tree.add_kmer([1])
+    print(tree.nodes)
+    return tree
+
+
+@pytest.mark.parametrize("query, value", [
+    [[0],        2],
+    [[1],        2],
+    [[2],        0],
+    [[0, 1],     0],
+    [[1, 0],     0],
+])
+def test_query_simple_tree2(simple_tree2, query, value):
+    res = simple_tree2.query(query)
+    assert res == value, f"Expected {value} for query {query}. Got {res}."

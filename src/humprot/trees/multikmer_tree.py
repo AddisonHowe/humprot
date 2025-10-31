@@ -18,23 +18,24 @@ class MultiKmerTree:
             alphabet_size=20,
     ):
         """
-        Parameters
-        ----------
-        filename : str or None
-            If provided, use a memory-mapped file at this path.
-            If None, the trie is stored fully in memory.
-        mode : str
-            File mode for np.memmap. One of: 'r+', 'w+', 'c'.
-        initial_nodes : int
-            Initial capacity of the trie.
-        alphabet_size : int
-            Number of possible child symbols per node.
+        Args:
+            filename : str or None
+                If provided, use a memory-mapped file at this path.
+                If None, the trie is stored fully in memory.
+                WARNING: Not currently implemented!!!
+            mode : str
+                File mode for np.memmap. One of: 'r+', 'w+', 'c'.
+                WARNING: Not currently implemented!!!
+            initial_nodes : int
+                Initial capacity of the trie.
+            alphabet_size : int
+                Number of possible child symbols per node.
         """
         self.alphabet_size = alphabet_size
         self.filename = filename
         self.mode = mode
         self.size = 0
-        self.depth=0
+        self.depth = 0
 
         dtype = np.dtype([
             ("key", np.int8),            # symbol leading to this node
@@ -49,6 +50,9 @@ class MultiKmerTree:
             # Regular in-memory array
             self.nodes = np.zeros(initial_nodes, dtype=dtype)
         else:
+            msg = "Memory-mapped storage not implemented."
+            msg += " Leave `filename` as None. `mode` argument ignored." 
+            raise NotImplementedError(msg)
             # Memory-mapped array
             if not os.path.exists(filename) or mode in ("w+", "r+"):
                 # Create or overwrite file
@@ -64,6 +68,16 @@ class MultiKmerTree:
         self.nodes["children"][:] = -1
         self.nodes["key"][:] = -1
         self.next_free = 1  # node 0 = root
+
+    def __len__(self):
+        """Return number of allocated nodes."""
+        return self.size
+
+    def __repr__(self):
+        repstr = "MultiKmerTree(depth={}, alphabet_size={})".format(
+            self.depth, self.alphabet_size,
+        )
+        return repstr
 
     # --------------------------------------------------
     # Node management
@@ -116,7 +130,7 @@ class MultiKmerTree:
             self.nodes["value"][node_idx] += value
 
         for depth, symbol in enumerate(kmer):
-            children = self.nodes["children"][node_idx]  # TODO: consider this as not being overwritten
+            children = self.nodes["children"][node_idx]
             child_idx = children[symbol]
 
             if depth == k - 1:
@@ -191,6 +205,10 @@ class MultiKmerTree:
                             q.append((child_idx, d + 1))
         return results
     
+    # --------------------------------------------------
+    # Queries
+    # --------------------------------------------------
+    
     def query(self, kmer, node=0):
         """
         Return the value/count for the given kmer.
@@ -207,8 +225,8 @@ class MultiKmerTree:
         return int(self.nodes["value"][node_idx])
     
     def deep_query(self, kmer, depth=None, node=0):
-        """
-        Return the value/count for the given kmer throughout the entire tree.
+        """Value/count for the given kmer throughout the entire tree.
+
         Returns 0 if the kmer is not present in the trie.
         Descends through the tree, checking if kmer is found starting from any 
         node.
@@ -226,33 +244,20 @@ class MultiKmerTree:
         for child_idx in idxs:
             count += self.deep_query(kmer, depth=depth - 1, node=child_idx)
         return count
-        # for symbol in kmer:
-        #     if symbol < 0 or symbol >= self.alphabet_size:
-        #         return 0
-        #     # Count number at current level
-        #     child_idx = self.nodes["children"][node_idx, symbol]
-
-        #     if child_idx == -1:
-        #         return 0
-        #     node_idx = child_idx
-        # return int(self.nodes["value"][node_idx])
     
     def query_masked(self, kmer, mask, node_idx=None):
         """Query the trie with masked positions.
 
-        Parameters
-        ----------
-        kmer : list/array of ints
-            Sequence to query.
-        mask : int
-            Symbol treated as a wildcard (matches any child).
-        node_idx : int or None
-            Current node index for recursion (default: root).
+        Args:
+            kmer : list/array of ints
+                Sequence to query.
+            mask : int
+                Symbol treated as a wildcard (matches any child).
+            node_idx : int or None
+                Current node index for recursion (default: root).
 
-        Returns
-        -------
-        int
-            Sum of counts for all matching paths.
+        Returns:
+            (int) Sum of counts for all matching paths.
         """
         if node_idx is None:
             node_idx = 0  # start at root
@@ -274,29 +279,6 @@ class MultiKmerTree:
             if child_idx == -1:
                 return 0
             return self.query_masked(kmer[1:], mask, node_idx=child_idx)
-        
-        # aa = kmer[0]
-        # next_aa = None if len(kmer) <= 1 else kmer[1]
-
-        # if aa == mask:
-        #     # Identify next non-mask
-        #     non_mask_screen = np.where(kmer[1:] != mask)[0]
-        #     if len(non_mask_screen) == 0:
-        #         # only masks remain, so return count of current node
-        #         return int(self.nodes["value"][node_idx])
-            
-        #     # sum over all children at the next 
-        #     next_non_mask_pos = non_mask_screen[0]
-        #     total = 0
-        #     for child_idx in self.nodes["children"][node_idx]:
-        #         if child_idx != -1:
-        #             total += self.query_masked(kmer[1:], mask, node_idx=child_idx)
-        #     return total
-        # else:
-        #     child_idx = self.nodes["children"][node_idx, aa]
-        #     if child_idx == -1:
-        #         return 0
-        #     return self.query_masked(kmer[1:], mask, node_idx=child_idx)
 
     # --------------------------------------------------
     # Debug / Info
@@ -314,6 +296,10 @@ class MultiKmerTree:
                 raise RuntimeError(msg)
         return data
     
+    # --------------------------------------------------
+    # I/O
+    # --------------------------------------------------
+
     @classmethod
     def load(cls, fpath):
         data = cls._load_tree_data(fpath)
@@ -335,40 +321,24 @@ class MultiKmerTree:
                 depth=self.depth,
             )
         return
-    
-    def __len__(self):
-        """Return number of allocated nodes."""
-        return self.size
 
     def flush(self):
         """Flush memmap to disk (if applicable)."""
+        raise NotImplementedError()
         if isinstance(self.nodes, np.memmap):
             self.nodes.flush()
-
-    # def save(self, fname, compressed=False):
-    #     if compressed:
-    #         np.savez_compressed(fname, self.nodes)
-    #     else:
-    #         np.save(fname, self.nodes)
-
-    def __repr__(self):
-        return f"MultiKmerTree(nodes={self.size}, alphabet_size={self.alphabet_size}, mode={'memmap' if self.filename else 'memory'})"
     
     def get_size_in_memory(self, node_idx=None, depth=None):
-        """
-        Return the total memory used by nodes in the trie (or subtree) in bytes.
+        """Total memory used by nodes in the trie (or subtree) in bytes.
 
-        Parameters
-        ----------
-        node_idx : int or None
-            Root of the subtree to measure. If None, use the root of the trie.
-        depth : int or None
-            Maximum depth to include. If None, include all descendants.
+        Args:
+            node_idx : int or None
+                Root of the subtree to measure. If None, use the root.
+            depth : int or None
+                Maximum depth to include. If None, include all descendants.
 
-        Returns
-        -------
-        int
-            Total memory in bytes.
+        Returns:
+            (int) Total memory in bytes.
         """
         if node_idx is None:
             node_idx = 0  # root

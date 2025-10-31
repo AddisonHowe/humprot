@@ -24,7 +24,6 @@ def int2sym(
 def build_i2s_s2i_maps(
         aa_list, mask=None, mask_sym="-",
 ) -> tuple[dict[np.uint8, str], dict[str, np.uint8]]:
-    aa_list = list("ACDEFGHIKLMNPQRSTVWYXU")
     sym2int_map = {sym: i for i, sym in enumerate(aa_list)}
     int2sym_map = {i: sym for i, sym in enumerate(aa_list)}
     if mask is not None:

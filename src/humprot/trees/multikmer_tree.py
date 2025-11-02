@@ -354,7 +354,9 @@ class MultiKmerTree:
         max_depth=1, then only the first layer of the graph is traversed.
         """
         return self._iternodes(
-            max_depth=max_depth, node_func=None, by_layer=False,
+            max_depth=max_depth, 
+            node_func=None, 
+            by_layer=False,
         )
 
     def iternodekeys(self, max_depth=None):
@@ -365,7 +367,9 @@ class MultiKmerTree:
         max_depth=1, then only the first layer of the graph is traversed.
         """
         return self._iternodes(
-            max_depth=max_depth, node_func=self._get_key_at_node, by_layer=False,
+            max_depth=max_depth, 
+            node_func=self._get_key_at_node, 
+            by_layer=False,
         )
     
     def iternodevalues(self, max_depth=None):
@@ -376,12 +380,16 @@ class MultiKmerTree:
         max_depth=1, then only the first layer of the graph is traversed.
         """
         return self._iternodes(
-            max_depth=max_depth, node_func=self._get_value_at_node
+            max_depth=max_depth, 
+            node_func=self._get_value_at_node, 
+            by_layer=False,
         )
     
     def iternodes_in_layers(self, max_depth=None, node_func=None):
         return self._iternodes(
-            max_depth=max_depth, by_layer=True, node_func=node_func,
+            max_depth=max_depth, 
+            by_layer=True, 
+            node_func=node_func,
         )
         
     

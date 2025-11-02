@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 datdir=data/asp_seqs
-outdir=out/asparaginase_multikmer_trees
-infile=AAA23446.1.fasta
-outfname=asp_AAA23446.1
+outdir=data/asp_trees
+infile=P0A962.fasta
+outfname=asp_P0A962
 
 kmax=25
 

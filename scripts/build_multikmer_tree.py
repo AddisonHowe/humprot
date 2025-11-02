@@ -1,4 +1,4 @@
-"""Construct a multikmer tree from a human proteome.
+"""Construct a multikmer tree from a proteome.
 
 """
 
@@ -19,6 +19,7 @@ from humprot.helpers import sym2int, int2sym
 from humprot.helpers import get_kmers_from_sequences
 from humprot.helpers import count_kmers_in_seqs
 from humprot.trees.multikmer_tree import MultiKmerTree
+from humprot.constants import AA_LIST_STD20
 
 
 def parse_args(args):
@@ -58,10 +59,10 @@ def main(args):
     os.makedirs(OUTDIR, exist_ok=True)
     os.makedirs(IMGDIR, exist_ok=True)
     
-    HUMAN_DATA_FPATH = os.path.join(DATDIR, INFNAME)
+    DATA_FPATH = os.path.join(DATDIR, INFNAME)
 
     if aa_list is None:
-        AA_LIST = list("ACDEFGHIKLMNPQRSTVWYXU")
+        AA_LIST = AA_LIST_STD20
     else:
         AA_LIST = list(aa_list)
 
@@ -73,9 +74,9 @@ def main(args):
     INT2SYM[MASK] = "-"
 
     # Load protein sequences
-    print(f"Loading protein sequences from file: {HUMAN_DATA_FPATH}")
+    print(f"Loading protein sequences from file: {DATA_FPATH}")
     id2seq = {}
-    for record in SeqIO.parse(HUMAN_DATA_FPATH, "fasta"):
+    for record in SeqIO.parse(DATA_FPATH, "fasta"):
         seqid = record.id
         seq = sym2int(record.seq, SYM2INT)
         id2seq[seqid] = seq
@@ -101,7 +102,7 @@ def main(args):
     saveas = os.path.join(OUTDIR, outfname)
     print(f"Saving to file: {saveas}")
     tt0 = time.time()
-    tree.save(saveas)
+    tree.save(saveas, trim_unused_nodes=True)
     tt1 = time.time()
     print(f"Save complete ({tt1-tt0:.3g} seconds)")
     time1 = time.time()
